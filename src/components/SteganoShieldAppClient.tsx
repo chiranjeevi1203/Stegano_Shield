@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, FileText, BarChart2, Info, AlertCircle, UploadCloud, ImageIcon, X } from 'lucide-react';
+import { Loader2, FileText, BarChart2, Info, AlertCircle, UploadCloud, ImageIcon, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { AnalysisResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
@@ -76,7 +76,7 @@ export default function SteganoShieldAppClient() {
     setIsDraggingOver(false);
     const file = event.dataTransfer.files?.[0];
     processFile(file);
-     if (fileInputRef.current) { // ensure input value is updated for consistency if needed
+     if (fileInputRef.current) { 
       const dataTransfer = new DataTransfer();
       if (file) dataTransfer.items.add(file);
       fileInputRef.current.files = dataTransfer.files;
@@ -224,7 +224,7 @@ export default function SteganoShieldAppClient() {
                 )}
                  {imagePreviewUrl && (
                   <div className="relative w-full h-full flex items-center justify-center">
-                    <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image" />
+                    <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image"/>
                   </div>
                 )}
               </div>
@@ -296,7 +296,16 @@ export default function SteganoShieldAppClient() {
                     </Card>
                     <Card className="p-4 bg-card">
                         <p className="text-sm text-muted-foreground">Classification</p>
-                        <p className={`text-2xl font-bold ${analysisResult.classification === 'Benign' ? 'text-success' : 'text-destructive'}`}>{analysisResult.classification}</p>
+                        <div className="flex items-center mt-1">
+                          {analysisResult.classification === 'Benign' ? (
+                            <CheckCircle2 className="h-7 w-7 mr-2 text-success" />
+                          ) : (
+                            <AlertTriangle className="h-7 w-7 mr-2 text-destructive" />
+                          )}
+                          <p className={`text-2xl font-bold ${analysisResult.classification === 'Benign' ? 'text-success' : 'text-destructive'}`}>
+                            {analysisResult.classification}
+                          </p>
+                        </div>
                     </Card>
                 </div>
                  <Card className="mt-4 p-4 bg-card">
@@ -331,3 +340,4 @@ export default function SteganoShieldAppClient() {
     </div>
   );
 }
+
