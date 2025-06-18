@@ -149,7 +149,7 @@ export default function SteganoShieldAppClient() {
                 <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" aria-describedby="image-upload-hint" />
                 <p id="image-upload-hint" className="text-sm text-muted-foreground mt-1">Max 5MB. Supported formats: PNG, JPG, GIF.</p>
                 {imagePreviewUrl && (
-                  <div className="mt-4 border rounded-lg p-2 bg-muted/30_DISABLED_preview_bg"> {/* Using neutral bg for preview area */}
+                  <div className="mt-4 border rounded-lg p-2 bg-card">
                     <p className="text-sm font-medium mb-2 text-center">Image Preview:</p>
                     <Image src={imagePreviewUrl} alt="Image preview" width={300} height={300} className="rounded-md object-contain mx-auto max-h-[300px] shadow-sm" data-ai-hint="abstract geometric" />
                   </div>
@@ -226,22 +226,22 @@ export default function SteganoShieldAppClient() {
             </div>
             <div className="md:col-span-2 space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-3 flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" />Steganography Assessment (Mocked)</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card className="p-4 bg-muted/20_DISABLED_">
+                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" />Steganography Assessment (Mocked)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <Card className="p-4 bg-card">
                         <p className="text-sm text-muted-foreground">Shannon Entropy</p>
                         <p className="text-2xl font-bold text-primary">{analysisResult.mockedEntropy}</p>
                     </Card>
-                    <Card className="p-4 bg-muted/20_DISABLED_">
+                    <Card className="p-4 bg-card">
                         <p className="text-sm text-muted-foreground">Classification</p>
-                        <p className={`text-2xl font-bold ${analysisResult.mockedClassification === 'Benign' ? 'text-green-600' : 'text-red-600'}`}>{analysisResult.mockedClassification}</p>
+                        <p className={`text-2xl font-bold ${analysisResult.mockedClassification === 'Benign' ? 'text-success' : 'text-destructive'}`}>{analysisResult.mockedClassification}</p>
                     </Card>
                 </div>
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold mb-3 flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Image Metadata (Mocked)</h3>
-                <Table>
+                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Image Metadata (Mocked)</h3>
+                <Table className="mt-2">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[150px]">Property</TableHead>
@@ -260,8 +260,8 @@ export default function SteganoShieldAppClient() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-3 flex items-center"><MessageSquare className="mr-2 h-5 w-5 text-primary" />Enhanced AI Prompt</h3>
-                <Card className="bg-muted/20_DISABLED_ p-4">
+                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><MessageSquare className="mr-2 h-5 w-5 text-primary" />Enhanced AI Prompt</h3>
+                <Card className="bg-card p-4 mt-2">
                   <p className="text-sm whitespace-pre-wrap font-code">{analysisResult.enhancedPrompt}</p>
                 </Card>
               </div>
