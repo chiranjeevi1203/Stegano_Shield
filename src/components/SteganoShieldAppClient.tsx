@@ -194,12 +194,20 @@ export default function SteganoShieldAppClient() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="p-4 sm:p-6 space-y-6">
-            <div className="relative">
+            <div className="relative"> {/* This outer relative is for the X button */}
               <div
                 className={cn(
-                  "w-full min-h-[16rem] sm:min-h-[20rem] lg:min-h-[24rem] border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-4 sm:p-6 transition-colors duration-200 ease-in-out group",
-                  isDraggingOver ? "border-primary bg-primary/10" : "border-border hover:border-primary/70 hover:bg-muted/50",
-                  imageFile ? "border-primary bg-primary/5 cursor-default" : "cursor-pointer"
+                  "w-full min-h-[16rem] sm:min-h-[20rem] lg:min-h-[24rem]",
+                  "border-2 border-dashed rounded-lg",
+                  "transition-colors duration-200 ease-in-out group relative",
+                  isDraggingOver 
+                    ? "border-primary bg-primary/10" 
+                    : (imageFile 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/70 hover:bg-muted/50"),
+                  imageFile 
+                    ? "flex p-0 cursor-default" // Image present: flex container, no padding
+                    : "p-4 sm:p-6 flex flex-col items-center justify-center text-center cursor-pointer" // Placeholder: padding and centering
                 )}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -219,6 +227,11 @@ export default function SteganoShieldAppClient() {
                   ref={fileInputRef}
                   aria-hidden="true"
                 />
+                {imagePreviewUrl && imageFile && (
+                  <div className="relative w-full flex-1"> {/* Image preview container takes all available flex space */}
+                    <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image"/>
+                  </div>
+                )}
                 {!imagePreviewUrl && !imageFile && (
                   <>
                     <ImageIcon className={cn("h-16 w-16 sm:h-20 sm:w-20 mb-4 text-muted-foreground group-hover:text-primary/70")} aria-hidden="true" />
@@ -231,12 +244,7 @@ export default function SteganoShieldAppClient() {
                     <p className="text-xs sm:text-sm text-muted-foreground mt-2">Max 100MB. PNG, JPG, GIF.</p>
                   </>
                 )}
-                 {imagePreviewUrl && (
-                  <div className="relative w-full h-full flex items-center justify-center p-1">
-                    <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image"/>
-                  </div>
-                )}
-                {!imagePreviewUrl && imageFile && (
+                {!imagePreviewUrl && imageFile && !isDraggingOver && ( // Show only if imageFile is set but preview isn't ready AND not dragging
                     <div className="text-center text-muted-foreground">Loading preview...</div>
                 )}
               </div>
@@ -348,3 +356,5 @@ export default function SteganoShieldAppClient() {
     </div>
   );
 }
+
+    
