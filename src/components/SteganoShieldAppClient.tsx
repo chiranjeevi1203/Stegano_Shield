@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
@@ -6,20 +7,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, UploadCloud, FileText, BarChart2, Info, MessageSquare, AlertCircle } from 'lucide-react';
-import { getEnhancedPromptAction } from '@/app/actions';
-import type { EnhancePromptInput } from '@/ai/flows/enhance-prompt-for-malware-classification';
+import { Loader2, UploadCloud, FileText, BarChart2, Info, AlertCircle } from 'lucide-react';
+// import { getEnhancedPromptAction } from '@/app/actions'; // Removed as prompts are removed
+// import type { EnhancePromptInput } from '@/ai/flows/enhance-prompt-for-malware-classification'; // Removed
 import type { AnalysisResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 
 export default function SteganoShieldAppClient() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  const [originalPrompt, setOriginalPrompt] = useState<string>("Analyze this image for hidden data using steganography techniques.");
-  const [enhancementInstructions, setEnhancementInstructions] = useState<string>("Focus on detecting subtle pixel changes, anomalies in LSB, and unusual patterns in frequency domains. Prioritize high accuracy in identifying potential hidden messages while minimizing false positives for common image artifacts.");
+  // Removed originalPrompt and enhancementInstructions states
   
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -71,24 +70,14 @@ export default function SteganoShieldAppClient() {
       toast({ variant: "destructive", title: "Error", description: "Please select an image file." });
       return;
     }
-    if (!originalPrompt.trim()) {
-      setError("Original prompt cannot be empty.");
-      toast({ variant: "destructive", title: "Error", description: "Original prompt cannot be empty." });
-      return;
-    }
-     if (!enhancementInstructions.trim()) {
-      setError("Enhancement instructions cannot be empty.");
-      toast({ variant: "destructive", title: "Error", description: "Enhancement instructions cannot be empty." });
-      return;
-    }
 
     setIsLoading(true);
     setError(null);
     setAnalysisResult(null);
 
     try {
-      const aiInput: EnhancePromptInput = { originalPrompt, enhancementInstructions };
-      const aiOutput = await getEnhancedPromptAction(aiInput);
+      // const aiInput: EnhancePromptInput = { originalPrompt, enhancementInstructions }; // Removed
+      // const aiOutput = await getEnhancedPromptAction(aiInput); // Removed
 
       // Mock other analysis data
       const fileSizeInMB = (imageFile.size / (1024 * 1024)).toFixed(2);
@@ -109,7 +98,7 @@ export default function SteganoShieldAppClient() {
         mockedEntropy: entropy,
         mockedMetadata: metadata,
         mockedClassification: classification,
-        enhancedPrompt: aiOutput.enhancedPrompt,
+        // enhancedPrompt: aiOutput.enhancedPrompt, // Removed
       });
 
     } catch (e: any) {
@@ -138,56 +127,34 @@ export default function SteganoShieldAppClient() {
     <div className="space-y-8">
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-secondary/50">
-          <CardTitle className="font-headline text-2xl flex items-center"><UploadCloud className="mr-2 h-6 w-6 text-primary" />Upload and Analyze Image</CardTitle>
-          <CardDescription>Select an image file and provide prompts to analyze for potential steganography.</CardDescription>
+          <CardTitle className="font-headline text-2xl flex items-center"><UploadCloud className="mr-2 h-6 w-6 text-primary" />Upload Image for Analysis</CardTitle>
+          <CardDescription>Select an image file to analyze for potential steganography.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              <div>
-                <Label htmlFor="image-upload" className="text-lg font-medium mb-2 block">Image File</Label>
-                <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" aria-describedby="image-upload-hint" />
-                <p id="image-upload-hint" className="text-sm text-muted-foreground mt-1">Max 5MB. Supported formats: PNG, JPG, GIF.</p>
-                {imagePreviewUrl && (
-                  <div className="mt-4 border rounded-lg p-2 bg-card">
-                    <p className="text-sm font-medium mb-2 text-center">Image Preview:</p>
-                    <Image src={imagePreviewUrl} alt="Image preview" width={300} height={300} className="rounded-md object-contain mx-auto max-h-[300px] shadow-sm" data-ai-hint="abstract geometric" />
-                  </div>
-                )}
+            <div className="flex flex-col items-center space-y-4">
+              <Label htmlFor="image-upload" className="text-xl font-medium sr-only">Upload Image</Label>
+              <div className="w-full max-w-lg flex flex-col items-center">
+                <Input 
+                  id="image-upload" 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  className="w-full h-16 text-lg p-4 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer" 
+                  aria-describedby="image-upload-hint" 
+                />
+                <p id="image-upload-hint" className="text-sm text-muted-foreground mt-2">Max 5MB. Supported formats: PNG, JPG, GIF.</p>
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="original-prompt" className="text-lg font-medium">Original Prompt</Label>
-                  <Textarea
-                    id="original-prompt"
-                    value={originalPrompt}
-                    onChange={(e) => setOriginalPrompt(e.target.value)}
-                    placeholder="e.g., Analyze this image for hidden data..."
-                    rows={4}
-                    className="mt-1"
-                    required
-                    aria-required="true"
-                  />
+              {imagePreviewUrl && (
+                <div className="mt-6 border rounded-lg p-4 bg-card w-full max-w-lg">
+                  <p className="text-base font-medium mb-3 text-center">Image Preview:</p>
+                  <Image src={imagePreviewUrl} alt="Image preview" width={400} height={400} className="rounded-md object-contain mx-auto max-h-[350px] shadow-sm" data-ai-hint="abstract geometric" />
                 </div>
-                <div>
-                  <Label htmlFor="enhancement-instructions" className="text-lg font-medium">Enhancement Instructions</Label>
-                  <Textarea
-                    id="enhancement-instructions"
-                    value={enhancementInstructions}
-                    onChange={(e) => setEnhancementInstructions(e.target.value)}
-                    placeholder="e.g., Focus on detecting subtle pixel changes..."
-                    rows={4}
-                    className="mt-1"
-                    required
-                    aria-required="true"
-                  />
-                </div>
-              </div>
+              )}
             </div>
           </CardContent>
-          <CardFooter className="bg-secondary/50 p-6">
-            <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-3 px-6">
+          <CardFooter className="bg-secondary/50 p-6 flex justify-center">
+            <Button type="submit" disabled={isLoading || !imageFile} className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-3 px-8">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Analyzing...
@@ -259,12 +226,7 @@ export default function SteganoShieldAppClient() {
                 </Table>
               </div>
 
-              <div>
-                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><MessageSquare className="mr-2 h-5 w-5 text-primary" />Enhanced AI Prompt</h3>
-                <Card className="bg-card p-4 mt-2">
-                  <p className="text-sm whitespace-pre-wrap font-code">{analysisResult.enhancedPrompt}</p>
-                </Card>
-              </div>
+              {/* Removed Enhanced AI Prompt section */}
             </div>
           </CardContent>
         </Card>

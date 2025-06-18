@@ -6,5 +6,5 @@ export interface AnalysisResult {
   mockedEntropy?: number;
   mockedMetadata?: { label: string; value: string | number }[];
   mockedClassification?: 'Benign' | 'Potential Steganography';
-  enhancedPrompt?: string;
+  // enhancedPrompt?: string; // Removed this field
 }
