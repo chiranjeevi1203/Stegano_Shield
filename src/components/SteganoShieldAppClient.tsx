@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, FileText, BarChart2, Info, AlertCircle, UploadCloud, ImageIcon } from 'lucide-react';
+import { Loader2, FileText, BarChart2, Info, AlertCircle, UploadCloud, ImageIcon, X } from 'lucide-react';
 import type { AnalysisResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
@@ -88,7 +88,19 @@ export default function SteganoShieldAppClient() {
   };
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleClearImageAndResults = () => {
+    setImageFile(null);
+    setImagePreviewUrl(null);
+    setAnalysisResult(null);
+    setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset file input
+    }
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -159,46 +171,68 @@ export default function SteganoShieldAppClient() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-6">
-            <div
-              className={cn(
-                "w-full h-64 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-6 cursor-pointer transition-colors duration-200 ease-in-out",
-                isDraggingOver ? "border-primary bg-primary/10" : "border-border hover:border-primary/70 hover:bg-muted/50",
-                imageFile ? "border-primary bg-primary/5" : ""
-              )}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragEnter={handleDragOver} // Use handleDragOver for onDragEnter as well
-              onDragLeave={handleDragLeave}
-              onClick={triggerFileInput}
-              role="button"
-              tabIndex={0}
-              aria-label="Image upload drop zone"
-            >
-              <Input 
-                id="image-upload" 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageChange} 
-                className="hidden"
-                ref={fileInputRef}
-                aria-hidden="true"
-              />
-              <ImageIcon className={cn("h-16 w-16 mb-4", imageFile ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
-              <p className="text-lg text-foreground">
-                Drag an image here or{' '}
-                <span className="font-semibold text-primary hover:underline">
-                  upload a file
-                </span>
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">Max 100MB. PNG, JPG, GIF.</p>
+            <div className="relative">
+              <div
+                className={cn(
+                  "w-full h-64 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-6 transition-colors duration-200 ease-in-out group",
+                  isDraggingOver ? "border-primary bg-primary/10" : "border-border hover:border-primary/70 hover:bg-muted/50",
+                  imageFile ? "border-primary bg-primary/5 cursor-default" : "cursor-pointer"
+                )}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver} 
+                onDragLeave={handleDragLeave}
+                onClick={!imageFile ? triggerFileInput : undefined} 
+                role={!imageFile ? "button" : undefined}
+                tabIndex={!imageFile ? 0 : undefined}
+                aria-label="Image upload drop zone"
+              >
+                <Input 
+                  id="image-upload" 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  className="hidden"
+                  ref={fileInputRef}
+                  aria-hidden="true"
+                />
+                {!imageFile && (
+                  <>
+                    <ImageIcon className={cn("h-16 w-16 mb-4 text-muted-foreground group-hover:text-primary/70")} aria-hidden="true" />
+                    <p className="text-lg text-foreground">
+                      Drag an image here or{' '}
+                      <span className="font-semibold text-primary hover:underline">
+                        upload a file
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">Max 100MB. PNG, JPG, GIF.</p>
+                  </>
+                )}
+                 {imagePreviewUrl && (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image" />
+                  </div>
+                )}
+              </div>
+              {imageFile && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 bg-background/50 hover:bg-background/80 text-destructive hover:text-destructive/80 rounded-full z-10"
+                    onClick={handleClearImageAndResults}
+                    aria-label="Clear selected image"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                )}
             </div>
 
-            {imagePreviewUrl && (
-              <div className="mt-6 border rounded-lg p-4 bg-card w-full max-w-xl mx-auto">
-                <p className="text-base font-medium mb-3 text-center">Image Preview:</p>
-                <Image src={imagePreviewUrl} alt="Image preview" width={500} height={500} className="rounded-md object-contain mx-auto max-h-[400px] shadow-sm" data-ai-hint="uploaded image" />
-              </div>
+
+            {imageFile && !imagePreviewUrl && (
+              <div className="mt-6 text-center text-muted-foreground">Loading preview...</div>
             )}
+
           </CardContent>
           <CardFooter className="bg-secondary/50 p-6 flex justify-center">
             <Button type="submit" disabled={isLoading || !imageFile} className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-3 px-8">
@@ -230,8 +264,8 @@ export default function SteganoShieldAppClient() {
           </CardHeader>
           <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1">
-              <h3 className="text-lg font-semibold mb-2 text-center">Analyzed Image</h3>
-              <Image src={analysisResult.imagePreviewUrl} alt={analysisResult.fileName} width={400} height={400} className="rounded-lg object-contain mx-auto max-h-[400px] shadow-md border" data-ai-hint="security data" />
+              <h3 className="text-lg font-semibold mb-2 text-center pb-1 border-b border-border/70">Analyzed Image</h3>
+              <Image src={analysisResult.imagePreviewUrl} alt={analysisResult.fileName} width={400} height={400} className="rounded-lg object-contain mx-auto max-h-[300px] shadow-md border" data-ai-hint="security data" />
               <div className="mt-4 text-sm space-y-1">
                 <p><strong>File Name:</strong> {analysisResult.fileName}</p>
                 <p><strong>File Size:</strong> {analysisResult.fileSize}</p>
@@ -279,3 +313,4 @@ export default function SteganoShieldAppClient() {
     </div>
   );
 }
+
