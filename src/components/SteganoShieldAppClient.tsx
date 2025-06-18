@@ -219,7 +219,7 @@ export default function SteganoShieldAppClient() {
                   ref={fileInputRef}
                   aria-hidden="true"
                 />
-                {!imageFile && (
+                {!imagePreviewUrl && !imageFile && (
                   <>
                     <ImageIcon className={cn("h-16 w-16 sm:h-20 sm:w-20 mb-4 text-muted-foreground group-hover:text-primary/70")} aria-hidden="true" />
                     <p className="text-md sm:text-lg text-foreground">
@@ -232,9 +232,12 @@ export default function SteganoShieldAppClient() {
                   </>
                 )}
                  {imagePreviewUrl && (
-                  <div className="relative w-full h-full flex items-center justify-center max-h-[22rem] sm:max-h-[18rem] lg:max-h-[22rem]">
+                  <div className="relative w-full h-full flex items-center justify-center max-h-[22rem] sm:max-h-[18rem] lg:max-h-[22rem] p-1">
                     <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image"/>
                   </div>
+                )}
+                {!imagePreviewUrl && imageFile && (
+                    <div className="text-center text-muted-foreground">Loading preview...</div>
                 )}
               </div>
               {imageFile && (
@@ -250,11 +253,6 @@ export default function SteganoShieldAppClient() {
                   </Button>
                 )}
             </div>
-
-            {imageFile && !imagePreviewUrl && (
-              <div className="mt-4 sm:mt-6 text-center text-muted-foreground">Loading preview...</div>
-            )}
-
           </CardContent>
           <CardFooter className="bg-secondary/50 p-4 sm:p-6 flex justify-center">
             <Button type="submit" disabled={isLoading || !imageFile} className="bg-accent text-accent-foreground hover:bg-accent/90 text-md sm:text-lg py-2.5 px-6 sm:py-3 sm:px-8">
