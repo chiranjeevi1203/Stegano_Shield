@@ -1,4 +1,5 @@
+
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/enhance-prompt-for-malware-classification.ts';
+import '@/ai/flows/classify-image-flow.ts';

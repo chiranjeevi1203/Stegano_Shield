@@ -1,21 +1,19 @@
-'use server';
-import { enhancePrompt, type EnhancePromptInput, type EnhancePromptOutput } from '@/ai/flows/enhance-prompt-for-malware-classification';
 
-export async function getEnhancedPromptAction(input: EnhancePromptInput): Promise<EnhancePromptOutput> {
+'use server';
+import { classifyImage, type ClassifyImageInput, type ClassifyImageOutput } from '@/ai/flows/classify-image-flow';
+
+export async function classifyImageAction(input: ClassifyImageInput): Promise<ClassifyImageOutput> {
   try {
-    // Add a small delay to simulate network latency for better UX feedback
-    // await new Promise(resolve => setTimeout(resolve, 1500)); 
-    const result = await enhancePrompt(input);
-    if (!result || !result.enhancedPrompt) {
-      throw new Error("AI failed to return an enhanced prompt.");
+    const result = await classifyImage(input);
+    if (!result || !result.classification || !result.explanation || typeof result.entropy !== 'number') {
+      throw new Error("AI failed to return a complete analysis.");
     }
     return result;
   } catch (error) {
-    console.error("Error in getEnhancedPromptAction:", error);
-    // It's better to throw a more specific error or a structured error object
+    console.error("Error in classifyImageAction:", error);
     if (error instanceof Error) {
-      throw new Error(`Failed to enhance prompt: ${error.message}`);
+      throw new Error(`Failed to classify image: ${error.message}`);
     }
-    throw new Error("An unknown error occurred while enhancing the prompt. Please try again.");
+    throw new Error("An unknown error occurred while classifying the image. Please try again.");
   }
 }

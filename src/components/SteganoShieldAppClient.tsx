@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, FileText, BarChart2, Info, AlertCircle, UploadCloud, ImageIcon, X } from 'lucide-react';
 import type { AnalysisResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
+import { classifyImageAction } from '@/app/actions';
 
 export default function SteganoShieldAppClient() {
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -27,15 +27,18 @@ export default function SteganoShieldAppClient() {
   const { toast } = useToast();
 
   useEffect(() => {
+    let objectUrl: string | null = null;
     if (imageFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(imageFile);
+      objectUrl = URL.createObjectURL(imageFile);
+      setImagePreviewUrl(objectUrl);
     } else {
       setImagePreviewUrl(null);
     }
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
   }, [imageFile]);
 
   const processFile = (file: File | null | undefined) => {
@@ -73,6 +76,11 @@ export default function SteganoShieldAppClient() {
     setIsDraggingOver(false);
     const file = event.dataTransfer.files?.[0];
     processFile(file);
+     if (fileInputRef.current) { // ensure input value is updated for consistency if needed
+      const dataTransfer = new DataTransfer();
+      if (file) dataTransfer.items.add(file);
+      fileInputRef.current.files = dataTransfer.files;
+    }
   };
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
@@ -99,8 +107,17 @@ export default function SteganoShieldAppClient() {
     setAnalysisResult(null);
     setError(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset file input
+      fileInputRef.current.value = ''; 
     }
+  };
+
+  const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -116,28 +133,25 @@ export default function SteganoShieldAppClient() {
     setAnalysisResult(null);
 
     try {
-      // Mock other analysis data
-      const fileSizeInMB = (imageFile.size / (1024 * 1024)).toFixed(2);
-      const entropy = parseFloat((Math.random() * (7.9 - 6.5) + 6.5).toFixed(2)); 
-      const classification = Math.random() > 0.6 ? 'Potential Steganography' : 'Benign';
+      const dataUri = await fileToDataUri(imageFile);
+      const classificationResponse = await classifyImageAction({ photoDataUri: dataUri });
       
+      const fileSizeInMB = (imageFile.size / (1024 * 1024)).toFixed(2);
       const metadata = [
         { label: "Dimensions", value: imagePreviewUrl ? await getImageDimensions(imagePreviewUrl) : "N/A" },
         { label: "Color Depth", value: "24-bit (mocked)" },
         { label: "Compression Type", value: "Lossless (mocked)" },
       ];
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
       setAnalysisResult({
         fileName: imageFile.name,
         fileSize: `${fileSizeInMB} MB`,
         fileType: imageFile.type,
         imagePreviewUrl: imagePreviewUrl!,
-        mockedEntropy: entropy,
-        mockedMetadata: metadata,
-        mockedClassification: classification,
+        classification: classificationResponse.classification,
+        explanation: classificationResponse.explanation,
+        entropy: classificationResponse.entropy,
+        metadata: metadata,
       });
 
     } catch (e: any) {
@@ -167,7 +181,7 @@ export default function SteganoShieldAppClient() {
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-card">
           <CardTitle className="font-headline text-2xl flex items-center"><UploadCloud className="mr-3 h-7 w-7 text-primary" />Upload Image for Analysis</CardTitle>
-          <CardDescription>Select or drag and drop an image file (up to 100MB) to analyze.</CardDescription>
+          <CardDescription>Select or drag and drop an image file (up to 100MB) to analyze its properties for potential hidden data or malware artifacts.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-6">
@@ -274,17 +288,21 @@ export default function SteganoShieldAppClient() {
             </div>
             <div className="md:col-span-2 space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" />Steganography Assessment (Mocked)</h3>
+                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" />Steganography & Malware Assessment</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <Card className="p-4 bg-card">
                         <p className="text-sm text-muted-foreground">Shannon Entropy</p>
-                        <p className="text-2xl font-bold text-primary">{analysisResult.mockedEntropy}</p>
+                        <p className="text-2xl font-bold text-primary">{analysisResult.entropy.toFixed(2)}</p>
                     </Card>
                     <Card className="p-4 bg-card">
                         <p className="text-sm text-muted-foreground">Classification</p>
-                        <p className={`text-2xl font-bold ${analysisResult.mockedClassification === 'Benign' ? 'text-success' : 'text-destructive'}`}>{analysisResult.mockedClassification}</p>
+                        <p className={`text-2xl font-bold ${analysisResult.classification === 'Benign' ? 'text-success' : 'text-destructive'}`}>{analysisResult.classification}</p>
                     </Card>
                 </div>
+                 <Card className="mt-4 p-4 bg-card">
+                    <p className="text-sm text-muted-foreground">Analyst Explanation</p>
+                    <p className="text-md text-foreground mt-1">{analysisResult.explanation}</p>
+                </Card>
               </div>
               
               <div>
@@ -297,7 +315,7 @@ export default function SteganoShieldAppClient() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {analysisResult.mockedMetadata?.map((meta, index) => (
+                    {analysisResult.metadata?.map((meta, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium">{meta.label}</TableCell>
                         <TableCell>{meta.value}</TableCell>
@@ -313,4 +331,3 @@ export default function SteganoShieldAppClient() {
     </div>
   );
 }
-
