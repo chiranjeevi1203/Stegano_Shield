@@ -137,8 +137,17 @@ export default function SteganoShieldAppClient() {
       const classificationResponse = await classifyImageAction({ photoDataUri: dataUri });
       
       const fileSizeInMB = (imageFile.size / (1024 * 1024)).toFixed(2);
+      let dimensions = "N/A";
+      if (imagePreviewUrl) {
+        try {
+            dimensions = await getImageDimensions(imagePreviewUrl);
+        } catch (dimError) {
+            console.warn("Could not get image dimensions:", dimError);
+        }
+      }
+
       const metadata = [
-        { label: "Dimensions", value: imagePreviewUrl ? await getImageDimensions(imagePreviewUrl) : "N/A" },
+        { label: "Dimensions", value: dimensions },
         { label: "Color Depth", value: "24-bit (mocked)" },
         { label: "Compression Type", value: "Lossless (mocked)" },
       ];
@@ -168,10 +177,10 @@ export default function SteganoShieldAppClient() {
   };
 
   const getImageDimensions = (url: string): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = document.createElement('img');
       img.onload = () => resolve(`${img.naturalWidth}x${img.naturalHeight}`);
-      img.onerror = () => resolve("N/A");
+      img.onerror = () => reject("Could not load image to get dimensions");
       img.src = url;
     });
   };
@@ -180,15 +189,15 @@ export default function SteganoShieldAppClient() {
     <div className="space-y-8">
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-card">
-          <CardTitle className="font-headline text-2xl flex items-center"><UploadCloud className="mr-3 h-7 w-7 text-primary" />Upload Image for Analysis</CardTitle>
+          <CardTitle className="font-headline text-xl sm:text-2xl flex items-center"><UploadCloud className="mr-3 h-6 w-6 sm:h-7 sm:w-7 text-primary" />Upload Image for Analysis</CardTitle>
           <CardDescription>Select or drag and drop an image file (up to 100MB) to analyze its properties for potential hidden data or malware artifacts.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="p-6 space-y-6">
+          <CardContent className="p-4 sm:p-6 space-y-6">
             <div className="relative">
               <div
                 className={cn(
-                  "w-full h-64 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-6 transition-colors duration-200 ease-in-out group",
+                  "w-full min-h-[16rem] sm:min-h-[20rem] lg:min-h-[24rem] border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-4 sm:p-6 transition-colors duration-200 ease-in-out group",
                   isDraggingOver ? "border-primary bg-primary/10" : "border-border hover:border-primary/70 hover:bg-muted/50",
                   imageFile ? "border-primary bg-primary/5 cursor-default" : "cursor-pointer"
                 )}
@@ -212,18 +221,18 @@ export default function SteganoShieldAppClient() {
                 />
                 {!imageFile && (
                   <>
-                    <ImageIcon className={cn("h-16 w-16 mb-4 text-muted-foreground group-hover:text-primary/70")} aria-hidden="true" />
-                    <p className="text-lg text-foreground">
+                    <ImageIcon className={cn("h-16 w-16 sm:h-20 sm:w-20 mb-4 text-muted-foreground group-hover:text-primary/70")} aria-hidden="true" />
+                    <p className="text-md sm:text-lg text-foreground">
                       Drag an image here or{' '}
                       <span className="font-semibold text-primary hover:underline">
                         upload a file
                       </span>
                     </p>
-                    <p className="text-sm text-muted-foreground mt-2">Max 100MB. PNG, JPG, GIF.</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2">Max 100MB. PNG, JPG, GIF.</p>
                   </>
                 )}
                  {imagePreviewUrl && (
-                  <div className="relative w-full h-full flex items-center justify-center">
+                  <div className="relative w-full h-full flex items-center justify-center max-h-[22rem] sm:max-h-[18rem] lg:max-h-[22rem]">
                     <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image"/>
                   </div>
                 )}
@@ -233,26 +242,25 @@ export default function SteganoShieldAppClient() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute top-2 right-2 bg-background/50 hover:bg-background/80 text-destructive hover:text-destructive/80 rounded-full z-10"
+                    className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-background/50 hover:bg-background/80 text-destructive hover:text-destructive/80 rounded-full z-10 p-1 sm:p-2"
                     onClick={handleClearImageAndResults}
                     aria-label="Clear selected image"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 )}
             </div>
 
-
             {imageFile && !imagePreviewUrl && (
-              <div className="mt-6 text-center text-muted-foreground">Loading preview...</div>
+              <div className="mt-4 sm:mt-6 text-center text-muted-foreground">Loading preview...</div>
             )}
 
           </CardContent>
-          <CardFooter className="bg-secondary/50 p-6 flex justify-center">
-            <Button type="submit" disabled={isLoading || !imageFile} className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-3 px-8">
+          <CardFooter className="bg-secondary/50 p-4 sm:p-6 flex justify-center">
+            <Button type="submit" disabled={isLoading || !imageFile} className="bg-accent text-accent-foreground hover:bg-accent/90 text-md sm:text-lg py-2.5 px-6 sm:py-3 sm:px-8">
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Analyzing...
+                  <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> Analyzing...
                 </>
               ) : (
                 "Start Analysis"
@@ -272,62 +280,64 @@ export default function SteganoShieldAppClient() {
 
       {analysisResult && !isLoading && (
         <Card className="shadow-xl mt-8 overflow-hidden">
-          <CardHeader className="bg-secondary/50">
-            <CardTitle className="font-headline text-2xl flex items-center"><FileText className="mr-2 h-6 w-6 text-primary" />Analysis Results</CardTitle>
+          <CardHeader className="bg-secondary/50 p-4 sm:p-6">
+            <CardTitle className="font-headline text-xl sm:text-2xl flex items-center"><FileText className="mr-2 h-5 w-5 sm:h-6 sm:w-6 text-primary" />Analysis Results</CardTitle>
             <CardDescription>Detailed report of the image analysis.</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1">
+          <CardContent className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-1 space-y-3">
               <h3 className="text-lg font-semibold mb-2 text-center pb-1 border-b border-border/70">Analyzed Image</h3>
-              <Image src={analysisResult.imagePreviewUrl} alt={analysisResult.fileName} width={400} height={400} className="rounded-lg object-contain mx-auto max-h-[300px] shadow-md border" data-ai-hint="security data" />
-              <div className="mt-4 text-sm space-y-1">
-                <p><strong>File Name:</strong> {analysisResult.fileName}</p>
+              <div className="relative w-full aspect-square mx-auto max-h-[300px] sm:max-h-[350px] md:max-h-[400px]">
+                <Image src={analysisResult.imagePreviewUrl} alt={analysisResult.fileName} layout="responsive" width={1} height={1} objectFit="contain" className="rounded-lg shadow-md border" data-ai-hint="security analysis" />
+              </div>
+              <div className="mt-3 text-sm space-y-1">
+                <p><strong>File Name:</strong> <span className="break-all">{analysisResult.fileName}</span></p>
                 <p><strong>File Size:</strong> {analysisResult.fileSize}</p>
                 <p><strong>File Type:</strong> {analysisResult.fileType}</p>
               </div>
             </div>
             <div className="md:col-span-2 space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" />Steganography & Malware Assessment</h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" />Steganography & Malware Assessment</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <Card className="p-4 bg-card">
-                        <p className="text-sm text-muted-foreground">Shannon Entropy</p>
-                        <p className="text-2xl font-bold text-primary">{analysisResult.entropy.toFixed(2)}</p>
+                    <Card className="p-3 sm:p-4 bg-card">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Shannon Entropy</p>
+                        <p className="text-xl sm:text-2xl font-bold text-primary">{analysisResult.entropy.toFixed(2)}</p>
                     </Card>
-                    <Card className="p-4 bg-card">
-                        <p className="text-sm text-muted-foreground">Classification</p>
+                    <Card className="p-3 sm:p-4 bg-card">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Classification</p>
                         <div className="flex items-center mt-1">
                           {analysisResult.classification === 'Benign' ? (
-                            <CheckCircle2 className="h-7 w-7 mr-2 text-success" />
+                            <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 mr-2 text-success" />
                           ) : (
-                            <AlertTriangle className="h-7 w-7 mr-2 text-destructive" />
+                            <AlertTriangle className="h-6 w-6 sm:h-7 sm:w-7 mr-2 text-destructive" />
                           )}
-                          <p className={`text-2xl font-bold ${analysisResult.classification === 'Benign' ? 'text-success' : 'text-destructive'}`}>
+                          <p className={`text-xl sm:text-2xl font-bold ${analysisResult.classification === 'Benign' ? 'text-success' : 'text-destructive'}`}>
                             {analysisResult.classification}
                           </p>
                         </div>
                     </Card>
                 </div>
-                 <Card className="mt-4 p-4 bg-card">
-                    <p className="text-sm text-muted-foreground">Analyst Explanation</p>
-                    <p className="text-md text-foreground mt-1">{analysisResult.explanation}</p>
+                 <Card className="mt-4 p-3 sm:p-4 bg-card">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Analyst Explanation</p>
+                    <p className="text-sm sm:text-md text-foreground mt-1">{analysisResult.explanation}</p>
                 </Card>
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Image Metadata (Mocked)</h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 pb-2 border-b border-border/70 flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Image Metadata (Mocked)</h3>
                 <Table className="mt-2">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[150px]">Property</TableHead>
-                      <TableHead>Value</TableHead>
+                      <TableHead className="w-[120px] sm:w-[150px] px-2 py-2 sm:px-4 sm:py-3">Property</TableHead>
+                      <TableHead className="px-2 py-2 sm:px-4 sm:py-3">Value</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {analysisResult.metadata?.map((meta, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{meta.label}</TableCell>
-                        <TableCell>{meta.value}</TableCell>
+                        <TableCell className="font-medium px-2 py-2 sm:px-4 sm:py-3">{meta.label}</TableCell>
+                        <TableCell className="px-2 py-2 sm:px-4 sm:py-3">{meta.value}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -340,4 +350,3 @@ export default function SteganoShieldAppClient() {
     </div>
   );
 }
-
