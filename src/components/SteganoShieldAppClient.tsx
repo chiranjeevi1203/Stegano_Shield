@@ -10,15 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, UploadCloud, FileText, BarChart2, Info, AlertCircle } from 'lucide-react';
-// import { getEnhancedPromptAction } from '@/app/actions'; // Removed as prompts are removed
-// import type { EnhancePromptInput } from '@/ai/flows/enhance-prompt-for-malware-classification'; // Removed
 import type { AnalysisResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 
 export default function SteganoShieldAppClient() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  // Removed originalPrompt and enhancementInstructions states
   
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -41,11 +38,11 @@ export default function SteganoShieldAppClient() {
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 100 * 1024 * 1024) { // 100MB limit
         toast({
           variant: "destructive",
           title: "File too large",
-          description: "Please upload an image smaller than 5MB.",
+          description: "Please upload an image smaller than 100MB.",
         });
         return;
       }
@@ -76,9 +73,6 @@ export default function SteganoShieldAppClient() {
     setAnalysisResult(null);
 
     try {
-      // const aiInput: EnhancePromptInput = { originalPrompt, enhancementInstructions }; // Removed
-      // const aiOutput = await getEnhancedPromptAction(aiInput); // Removed
-
       // Mock other analysis data
       const fileSizeInMB = (imageFile.size / (1024 * 1024)).toFixed(2);
       const entropy = parseFloat((Math.random() * (7.9 - 6.5) + 6.5).toFixed(2)); // Typical range for images
@@ -98,7 +92,6 @@ export default function SteganoShieldAppClient() {
         mockedEntropy: entropy,
         mockedMetadata: metadata,
         mockedClassification: classification,
-        // enhancedPrompt: aiOutput.enhancedPrompt, // Removed
       });
 
     } catch (e: any) {
@@ -128,27 +121,27 @@ export default function SteganoShieldAppClient() {
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-secondary/50">
           <CardTitle className="font-headline text-2xl flex items-center"><UploadCloud className="mr-2 h-6 w-6 text-primary" />Upload Image for Analysis</CardTitle>
-          <CardDescription>Select an image file to analyze for potential steganography.</CardDescription>
+          <CardDescription>Select an image file (up to 100MB) to analyze for potential steganography.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-6">
             <div className="flex flex-col items-center space-y-4">
               <Label htmlFor="image-upload" className="text-xl font-medium sr-only">Upload Image</Label>
-              <div className="w-full max-w-lg flex flex-col items-center">
+              <div className="w-full max-w-xl flex flex-col items-center"> {/* Increased max-w-xl from max-w-lg */}
                 <Input 
                   id="image-upload" 
                   type="file" 
                   accept="image/*" 
                   onChange={handleImageChange} 
-                  className="w-full h-16 text-lg p-4 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-base file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer" 
+                  className="w-full h-24 text-xl p-6 file:mr-6 file:py-4 file:px-8 file:rounded-full file:border-0 file:text-lg file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"  /* Increased h-24, text-xl, p-6, file:mr-6, file:py-4, file:px-8, file:text-lg */
                   aria-describedby="image-upload-hint" 
                 />
-                <p id="image-upload-hint" className="text-sm text-muted-foreground mt-2">Max 5MB. Supported formats: PNG, JPG, GIF.</p>
+                <p id="image-upload-hint" className="text-sm text-muted-foreground mt-3">Max 100MB. Supported formats: PNG, JPG, GIF.</p> {/* Updated hint and mt-3 */}
               </div>
               {imagePreviewUrl && (
-                <div className="mt-6 border rounded-lg p-4 bg-card w-full max-w-lg">
+                <div className="mt-6 border rounded-lg p-4 bg-card w-full max-w-xl"> {/* Increased max-w-xl */}
                   <p className="text-base font-medium mb-3 text-center">Image Preview:</p>
-                  <Image src={imagePreviewUrl} alt="Image preview" width={400} height={400} className="rounded-md object-contain mx-auto max-h-[350px] shadow-sm" data-ai-hint="abstract geometric" />
+                  <Image src={imagePreviewUrl} alt="Image preview" width={500} height={500} className="rounded-md object-contain mx-auto max-h-[400px] shadow-sm" data-ai-hint="abstract geometric" /> {/* Increased width/height and max-h */}
                 </div>
               )}
             </div>
@@ -225,8 +218,6 @@ export default function SteganoShieldAppClient() {
                   </TableBody>
                 </Table>
               </div>
-
-              {/* Removed Enhanced AI Prompt section */}
             </div>
           </CardContent>
         </Card>
