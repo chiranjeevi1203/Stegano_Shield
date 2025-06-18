@@ -232,7 +232,7 @@ export default function SteganoShieldAppClient() {
                   </>
                 )}
                  {imagePreviewUrl && (
-                  <div className="relative w-full h-full flex items-center justify-center max-h-[22rem] sm:max-h-[18rem] lg:max-h-[22rem] p-1">
+                  <div className="relative w-full h-full flex items-center justify-center p-1">
                     <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="uploaded image"/>
                   </div>
                 )}
