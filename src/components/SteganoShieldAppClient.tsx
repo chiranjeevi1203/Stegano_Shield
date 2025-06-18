@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useRef, type DragEvent } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, UploadCloud, FileText, BarChart2, Info, AlertCircle } from 'lucide-react';
+import { Loader2, FileText, BarChart2, Info, AlertCircle, UploadCloud, ImageIcon } from 'lucide-react';
 import type { AnalysisResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+import { cn } from '@/lib/utils';
 
 export default function SteganoShieldAppClient() {
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -20,7 +21,9 @@ export default function SteganoShieldAppClient() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,29 +38,57 @@ export default function SteganoShieldAppClient() {
     }
   }, [imageFile]);
 
+  const processFile = (file: File | null | undefined) => {
+    if (!file) return;
+
+    if (file.size > 100 * 1024 * 1024) { // 100MB limit
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please upload an image smaller than 100MB.",
+      });
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please upload a valid image file (e.g., PNG, JPG, GIF).",
+      });
+      return;
+    }
+    setImageFile(file);
+    setAnalysisResult(null); 
+    setError(null);
+  };
+
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 100 * 1024 * 1024) { // 100MB limit
-        toast({
-          variant: "destructive",
-          title: "File too large",
-          description: "Please upload an image smaller than 100MB.",
-        });
-        return;
-      }
-      if (!file.type.startsWith('image/')) {
-        toast({
-          variant: "destructive",
-          title: "Invalid file type",
-          description: "Please upload a valid image file (e.g., PNG, JPG, GIF).",
-        });
-        return;
-      }
-      setImageFile(file);
-      setAnalysisResult(null); // Reset previous results
-      setError(null);
-    }
+    processFile(file);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingOver(false);
+    const file = event.dataTransfer.files?.[0];
+    processFile(file);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingOver(false);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -75,7 +106,7 @@ export default function SteganoShieldAppClient() {
     try {
       // Mock other analysis data
       const fileSizeInMB = (imageFile.size / (1024 * 1024)).toFixed(2);
-      const entropy = parseFloat((Math.random() * (7.9 - 6.5) + 6.5).toFixed(2)); // Typical range for images
+      const entropy = parseFloat((Math.random() * (7.9 - 6.5) + 6.5).toFixed(2)); 
       const classification = Math.random() > 0.6 ? 'Potential Steganography' : 'Benign';
       
       const metadata = [
@@ -84,6 +115,9 @@ export default function SteganoShieldAppClient() {
         { label: "Compression Type", value: "Lossless (mocked)" },
       ];
       
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       setAnalysisResult({
         fileName: imageFile.name,
         fileSize: `${fileSizeInMB} MB`,
@@ -119,32 +153,52 @@ export default function SteganoShieldAppClient() {
   return (
     <div className="space-y-8">
       <Card className="shadow-xl overflow-hidden">
-        <CardHeader className="bg-secondary/50">
-          <CardTitle className="font-headline text-2xl flex items-center"><UploadCloud className="mr-2 h-6 w-6 text-primary" />Upload Image for Analysis</CardTitle>
-          <CardDescription>Select an image file (up to 100MB) to analyze for potential steganography.</CardDescription>
+        <CardHeader className="bg-card">
+          <CardTitle className="font-headline text-2xl flex items-center"><UploadCloud className="mr-3 h-7 w-7 text-primary" />Upload Image for Analysis</CardTitle>
+          <CardDescription>Select or drag and drop an image file (up to 100MB) to analyze.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-              <Label htmlFor="image-upload" className="text-xl font-medium sr-only">Upload Image</Label>
-              <div className="w-full max-w-xl flex flex-col items-center"> {/* Increased max-w-xl from max-w-lg */}
-                <Input 
-                  id="image-upload" 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageChange} 
-                  className="w-full h-24 text-xl p-6 file:mr-6 file:py-4 file:px-8 file:rounded-full file:border-0 file:text-lg file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"  /* Increased h-24, text-xl, p-6, file:mr-6, file:py-4, file:px-8, file:text-lg */
-                  aria-describedby="image-upload-hint" 
-                />
-                <p id="image-upload-hint" className="text-sm text-muted-foreground mt-3">Max 100MB. Supported formats: PNG, JPG, GIF.</p> {/* Updated hint and mt-3 */}
-              </div>
-              {imagePreviewUrl && (
-                <div className="mt-6 border rounded-lg p-4 bg-card w-full max-w-xl"> {/* Increased max-w-xl */}
-                  <p className="text-base font-medium mb-3 text-center">Image Preview:</p>
-                  <Image src={imagePreviewUrl} alt="Image preview" width={500} height={500} className="rounded-md object-contain mx-auto max-h-[400px] shadow-sm" data-ai-hint="abstract geometric" /> {/* Increased width/height and max-h */}
-                </div>
+            <div
+              className={cn(
+                "w-full h-64 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center p-6 cursor-pointer transition-colors duration-200 ease-in-out",
+                isDraggingOver ? "border-primary bg-primary/10" : "border-border hover:border-primary/70 hover:bg-muted/50",
+                imageFile ? "border-primary bg-primary/5" : ""
               )}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragOver} // Use handleDragOver for onDragEnter as well
+              onDragLeave={handleDragLeave}
+              onClick={triggerFileInput}
+              role="button"
+              tabIndex={0}
+              aria-label="Image upload drop zone"
+            >
+              <Input 
+                id="image-upload" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageChange} 
+                className="hidden"
+                ref={fileInputRef}
+                aria-hidden="true"
+              />
+              <ImageIcon className={cn("h-16 w-16 mb-4", imageFile ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
+              <p className="text-lg text-foreground">
+                Drag an image here or{' '}
+                <span className="font-semibold text-primary hover:underline">
+                  upload a file
+                </span>
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">Max 100MB. PNG, JPG, GIF.</p>
             </div>
+
+            {imagePreviewUrl && (
+              <div className="mt-6 border rounded-lg p-4 bg-card w-full max-w-xl mx-auto">
+                <p className="text-base font-medium mb-3 text-center">Image Preview:</p>
+                <Image src={imagePreviewUrl} alt="Image preview" width={500} height={500} className="rounded-md object-contain mx-auto max-h-[400px] shadow-sm" data-ai-hint="uploaded image" />
+              </div>
+            )}
           </CardContent>
           <CardFooter className="bg-secondary/50 p-6 flex justify-center">
             <Button type="submit" disabled={isLoading || !imageFile} className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-3 px-8">
